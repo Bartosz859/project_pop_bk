@@ -3,7 +3,6 @@ import tkintermapview
 import requests
 from bs4 import BeautifulSoup
 
-# Listy danych
 pralnie = []
 pracownicy = []
 klienci = []
@@ -104,6 +103,14 @@ def pokaz_klientow_pralni():
                 k.marker = map_widget.set_marker(k.coordinates[0], k.coordinates[1], text=k.nazwa)
                 wszystkie_markery.append(k.marker)
 
+def pokaz_pracownikow_pralni():
+    usun_wszystkie_markery()
+    nazwa_pralni = entry_pralnia_pracownik.get()
+    if nazwa_pralni:
+        for p in pracownicy:
+            if p.pralnia == nazwa_pralni:
+                p.marker = map_widget.set_marker(p.coordinates[0], p.coordinates[1], text=p.nazwa)
+                wszystkie_markery.append(p.marker)
 
 def pokaz_formularz(typ):
     for widget in frame_formularz.winfo_children():
@@ -126,6 +133,27 @@ def pokaz_formularz(typ):
         Label(frame_formularz, text="Pralnia").grid(row=2, column=0)
         entry_extra = Entry(frame_formularz)
         entry_extra.grid(row=2, column=1)
+
+def usun_pralnie():
+    selected_index = listbox_pralnie.curselection()
+    if selected_index:
+        pralnie.pop(selected_index[0])
+        listbox_pralnie.delete(selected_index[0])
+        usun_wszystkie_markery()
+
+def usun_pracownika():
+    selected_index = listbox_pracownicy.curselection()
+    if selected_index:
+        pracownicy.pop(selected_index[0])
+        listbox_pracownicy.delete(selected_index[0])
+        usun_wszystkie_markery()
+
+def usun_klienta():
+    selected_index = listbox_klienci.curselection()
+    if selected_index:
+        klienci.pop(selected_index[0])
+        listbox_klienci.delete(selected_index[0])
+        usun_wszystkie_markery()
 
 def edytuj_pralnie():
     selected_index = listbox_pralnie.curselection()
@@ -207,6 +235,9 @@ frame_left.grid(row=0, column=0, sticky=N)
 frame_formularz = Frame(frame_left)
 frame_formularz.grid(row=3, column=0, columnspan=2, pady=10)
 
+Button(frame_left, text="Pokaż wszystkie pralnie", command=pokaz_wszystkie_pralnie).grid(row=4, column=0, columnspan=2)
+Button(frame_left, text="Pokaż wszystkich pracowników", command=pokaz_wszystkich_pracownikow).grid(row=5, column=0, columnspan=2)
+
 Label(frame_left, text="Pralnia dla klientów:").grid(row=6, column=0, columnspan=2)
 entry_pralnia_klient = Entry(frame_left)
 entry_pralnia_klient.grid(row=7, column=0, columnspan=2)
@@ -215,6 +246,7 @@ Button(frame_left, text="Pokaż klientów pralni", command=pokaz_klientow_pralni
 Label(frame_left, text="Pralnia dla pracowników:").grid(row=9, column=0, columnspan=2)
 entry_pralnia_pracownik = Entry(frame_left)
 entry_pralnia_pracownik.grid(row=10, column=0, columnspan=2)
+Button(frame_left, text="Pokaż pracowników pralni", command=pokaz_pracownikow_pralni).grid(row=11, column=0, columnspan=2)
 
 Label(frame_left, text="Pralnie").grid(row=12, column=0)
 listbox_pralnie = Listbox(frame_left, height=5)
