@@ -1,202 +1,226 @@
 from tkinter import *
-
 import tkintermapview
+import requests
+from bs4 import BeautifulSoup
+
+# Listy danych
+pralnie = []
+pracownicy = []
+klienci = []
+wszystkie_markery = []
+
+class ObiektMapy:
+    def __init__(self, nazwa, miejscowosc):
+        self.nazwa = nazwa
+        self.miejscowosc = miejscowosc
+        self.coordinates = self.get_coordinates()
+        self.marker = None
+
+    def get_coordinates(self):
+        url = f"https://pl.wikipedia.org/wiki/{self.miejscowosc}"
+        try:
+            response = requests.get(url).text
+            soup = BeautifulSoup(response, "html.parser")
+            longitude = float(soup.select(".longitude")[1].text.replace(",", "."))
+            latitude = float(soup.select(".latitude")[1].text.replace(",", "."))
+            return [latitude, longitude]
+        except:
+            return [52.23, 21.0]  # domyślna lokalizacja (Warszawa)
+
+class Pralnia(ObiektMapy):
+    pass
+
+class Pracownik(ObiektMapy):
+    def __init__(self, nazwa, miejscowosc, pralnia):
+        self.pralnia = pralnia
+        super().__init__(nazwa, miejscowosc)
+
+class Klient(ObiektMapy):
+    def __init__(self, nazwa, miejscowosc, pralnia):
+        self.pralnia = pralnia
+        super().__init__(nazwa, miejscowosc)
 
 
-users:list=[]
+def dodaj_pralnie():
+    nazwa = entry_name.get()
+    miejscowosc = entry_location.get()
+    if nazwa and miejscowosc:
+        pralnia = Pralnia(nazwa, miejscowosc)
+        pralnie.append(pralnia)
+        listbox_pralnie.insert(END, pralnia.nazwa)
+    clear_entries()
 
-class User:
-    def _init_(self,name,surname,location,post):
-        self.name =name
-        self.surname=surname
-        self.location=location
-        self.post=post
-        self.coordinates=self.get_coordinates()
-        self.marker=map_widget.set_marker(self.coordinates[0],self.coordinates[1])
+def dodaj_pracownika():
 
-    def get_coordinates(self) -> list:
-        import requests
-        from bs4 import BeautifulSoup
-        url = f"https://pl.wikipedia.org/wiki/{self.location}"
-        response = requests.get(url).text
-        response_html = BeautifulSoup(response, "html.parser")
-        longitude = float(response_html.select(".longitude")[1].text.replace(",", "."))
-        latitude = float(response_html.select(".latitude")[1].text.replace(",", "."))
-        print(longitude)
-        print(latitude)
-        return [latitude, longitude]
-
-def add_user():
-    zmienna_imie=entry_name.get()
-    zmienna_nazwisko=entry_surname.get()
-    zmienna_miejscowosc=entry_location.get()
-    zmienna_post=entry_posts.get()
-    user= User(name=zmienna_imie, surname=zmienna_nazwisko, location=zmienna_miejscowosc, post=zmienna_post)
-    users.append(user)
-
-    entry_name.delete(0,END)
-    entry_surname.delete(0,END)
-    entry_location.delete(0,END)
-    entry_posts.delete(0,END)
-
-    entry_name.focus()
-
-    show_users()
+    miejscowosc = entry_location.get()
 
 
+def dodaj_klienta():
+    nazwa = entry_name.get()
+    miejscowosc = entry_location.get()
+    pralnia = entry_extra.get()
+    if nazwa and miejscowosc and pralnia:
+        klient = Klient(nazwa, miejscowosc, pralnia)
+        klienci.append(klient)
+        listbox_klienci.insert(END, klient.nazwa)
+    clear_entries()
 
-def show_users():
-    listbox_lista_obiketow.delete(0,END)
-    for idx,user in enumerate(users):
-        listbox_lista_obiketow.insert(idx,f'{idx+1}. {user.name} {user.surname}')
-
-
-def remove_user():
-    i=listbox_lista_obiketow.index(ACTIVE)
-    users[i].marker.delete()
-    users.pop(i)
-    show_users()
-
-def edit_user():
-    i=listbox_lista_obiketow.index(ACTIVE)
-    name=users[i].name
-    surname=users[i].surname
-    location=users[i].location
-    post=users[i].post
-
-    entry_name.insert(0,name)
-    entry_surname.insert(0,surname)
-    entry_location.insert(0,location)
-    entry_posts.insert(0,post)
-
-    button_dodaj_obiekt.config(text='zapisz',command=lambda: update_user(i))
-
-def update_user(i):
-    new_name=entry_name.get()
-    new_surname=entry_surname.get()
-    new_location=entry_location.get()
-    new_post=entry_posts.get()
-
-    users[i].name=new_name
-    users[i].surname=new_surname
-    users[i].location=new_location
-    users[i].post=new_post
-
-    users[i].marker.delete()
-    users[i].coordinates=users[i].get_coordinates()
-    users[i].marker=map_widget.set_marker(users[i].coordinates[0],users[i].coordinates[1])
+def clear_entries():
+    entry_name.delete(0, END)
+    entry_location.delete(0, END)
 
 
+def usun_wszystkie_markery():
+    global wszystkie_markery
+    for marker in wszystkie_markery:
+        marker.delete()
+    wszystkie_markery = []
 
-    entry_name.delete(0,END)
-    entry_surname.delete(0,END)
-    entry_location.delete(0,END)
-    entry_posts.delete(0,END)
-    entry_name.focus()
+def pokaz_wszystkie_pralnie():
+    usun_wszystkie_markery()
+    map_widget.set_zoom(6)
+    for p in pralnie:
+        p.marker = map_widget.set_marker(p.coordinates[0], p.coordinates[1], text=p.nazwa)
+        wszystkie_markery.append(p.marker)
+
+def pokaz_wszystkich_pracownikow():
+    usun_wszystkie_markery()
+    map_widget.set_zoom(6)
+    for p in pracownicy:
+        p.marker = map_widget.set_marker(p.coordinates[0], p.coordinates[1], text=p.nazwa)
+        wszystkie_markery.append(p.marker)
+
+def pokaz_klientow_pralni():
+    usun_wszystkie_markery()
+    nazwa_pralni = entry_pralnia_klient.get()
+    if nazwa_pralni:
+        for k in klienci:
+            if k.pralnia == nazwa_pralni:
+                k.marker = map_widget.set_marker(k.coordinates[0], k.coordinates[1], text=k.nazwa)
+                wszystkie_markery.append(k.marker)
+
+def pokaz_pracownikow_pralni():
+    usun_wszystkie_markery()
+    nazwa_pralni = entry_pralnia_pracownik.get()
+    if nazwa_pralni:
+        for p in pracownicy:
+            if p.pralnia == nazwa_pralni:
+                p.marker = map_widget.set_marker(p.coordinates[0], p.coordinates[1], text=p.nazwa)
+                wszystkie_markery.append(p.marker)
+
+def pokaz_formularz(typ):
+    for widget in frame_formularz.winfo_children():
+        widget.destroy()
+
+    Label(frame_formularz, text="Nazwa").grid(row=0, column=0)
+    global entry_name
+    entry_name = Entry(frame_formularz)
+    entry_name.grid(row=0, column=1)
+
+    Label(frame_formularz, text="Miejscowość").grid(row=1, column=0)
+    global entry_location
+    entry_location = Entry(frame_formularz)
+    entry_location.grid(row=1, column=1)
+
+    global entry_extra
+    entry_extra = None
+
+def usun_pralnie():
+    selected_index = listbox_pralnie.curselection()
+    if selected_index:
+        pralnie.pop(selected_index[0])
+        listbox_pralnie.delete(selected_index[0])
+        usun_wszystkie_markery()
+
+def usun_pracownika():
+    selected_index = listbox_pracownicy.curselection()
+    if selected_index:
+        pracownicy.pop(selected_index[0])
+        listbox_pracownicy.delete(selected_index[0])
+        usun_wszystkie_markery()
+
+def usun_klienta():
+    selected_index = listbox_klienci.curselection()
+    if selected_index:
+        klienci.pop(selected_index[0])
+        listbox_klienci.delete(selected_index[0])
+        usun_wszystkie_markery()
+
+def edytuj_pralnie():
+    selected_index = listbox_pralnie.curselection()
+    if selected_index:
+        pralnia = pralnie[selected_index[0]]
+        entry_name.delete(0, END)
+        entry_name.insert(0, pralnia.nazwa)
+        entry_location.delete(0, END)
+        entry_location.insert(0, pralnia.miejscowosc)
+
+        def zapisz():
+            pralnia.nazwa = entry_name.get()
+            pralnia.miejscowosc = entry_location.get()
+            pralnia.coordinates = pralnia.get_coordinates()
+            listbox_pralnie.delete(selected_index[0])
+            listbox_pralnie.insert(selected_index[0], pralnia.nazwa)
+            clear_entries()
+            btn_zapisz.destroy()
+
+        btn_zapisz = Button(frame_formularz, text="Zapisz zmiany", command=zapisz)
+        btn_zapisz.grid(row=6, column=0, columnspan=2)
 
 
-    button_dodaj_obiekt.config(text='Dodaj obiekt',command=add_user)
-    show_users()
+def edytuj_klienta():
+    selected_index = listbox_klienci.curselection()
+    if selected_index:
+        klient = klienci[selected_index[0]]
+        entry_name.delete(0, END)
+        entry_name.insert(0, klient.nazwa)
+        entry_location.delete(0, END)
+        entry_location.insert(0, klient.miejscowosc)
 
 
-def show_user_details():
-    i=listbox_lista_obiketow.index(ACTIVE)
-    name=users[i].name
-    surname=users[i].surname
-    location=users[i].location
-    post=users[i].post
-    label_szczegoly_name_wartosc.config(text=name)
-    label_szczegoly_surname_wartosc.config(text=surname)
-    label_szczegoly_location_wartosc.config(text=location)
-    label_szczegoly_posts_wartosc.config(text=post)
+        def zapisz():
+            klient.nazwa = entry_name.get()
+            klient.miejscowosc = entry_location.get()
+            klient.pralnia = entry_extra.get()
+            klient.coordinates = klient.get_coordinates()
+            listbox_klienci.delete(selected_index[0])
+            listbox_klienci.insert(selected_index[0], klient.nazwa)
+            clear_entries()
+            btn_zapisz.destroy()
 
-    map_widget.set_position(users[i].coordinates[0],users[i].coordinates[1])
-    map_widget.set_zoom(17)
-
-
-
-
-
-
+        btn_zapisz = Button(frame_formularz, text="Zapisz zmiany", command=zapisz)
+        btn_zapisz.grid(row=6, column=0, columnspan=2)
 
 
 root = Tk()
-root.geometry("1200x760")
-root.title("Map Book MJ")
+root.geometry("1200x800")
+root.title()
 
+frame_left = Frame(root)
+frame_left.grid(row=0, column=0, sticky=N)
 
-ramka_lista_obiektow=Frame(root)
-ramka_formularz=Frame(root)
-ramka_szczegoly_obiektow=Frame(root)
-ramka_mapa=Frame(root)
+frame_formularz = Frame(frame_left)
+frame_formularz.grid(row=3, column=0, columnspan=2, pady=10)
 
-ramka_lista_obiektow.grid(row=0, column=0)
-ramka_formularz.grid(row=0, column=1)
-ramka_szczegoly_obiektow.grid(row=1, column=0,columnspan=2)
-ramka_mapa.grid(row=2, column=0, columnspan=2)
+Label(frame_left, text="Pralnia dla klientów:").grid(row=6, column=0, columnspan=2)
+entry_pralnia_klient = Entry(frame_left)
+entry_pralnia_klient.grid(row=7, column=0, columnspan=2)
 
-# ramka_lista_obiektow
-label_lista_obiektow=Label(ramka_lista_obiektow, text="Lista użytkowników")
-label_lista_obiektow.grid(row=0, column=0,columnspan=3)
-listbox_lista_obiketow=Listbox(ramka_lista_obiektow, width=50, height=10)
-listbox_lista_obiketow.grid(row=1, column=0, columnspan=3)
-button_pokaz_szczegoly_obiektu=Button(ramka_lista_obiektow, text='Pokaż szczegóły',command=show_user_details)
-button_pokaz_szczegoly_obiektu.grid(row=2, column=0)
-button_usun_obiekt=Button(ramka_lista_obiektow, text='Usuń obiekt',command=remove_user)
-button_usun_obiekt.grid(row=2, column=1)
-button_edytuj_obiekt=Button(ramka_lista_obiektow, text='Edytuj obiekt', command=edit_user)
-button_edytuj_obiekt.grid(row=2, column=2)
+Label(frame_left, text="Pralnia dla pracowników:").grid(row=9, column=0, columnspan=2)
+entry_pralnia_pracownik = Entry(frame_left)
 
-# ramka_formularz
-label_formularz=Label(ramka_formularz, text="Formularz")
-label_formularz.grid(row=0, column=0, columnspan=2)
-label_name=Label(ramka_formularz, text="Imię:")
-label_name.grid(row=1, column=0, sticky=W)
-label_surname=Label(ramka_formularz, text="Nazwisko:")
-label_surname.grid(row=2, column=0,sticky=W)
-label_location=Label(ramka_formularz, text="Miejscowość:")
-label_location.grid(row=3, column=0,sticky=W)
-label_posts=Label(ramka_formularz, text="Postów:")
-label_posts.grid(row=4, column=0,sticky=W)
+Label(frame_left, text="Pralnie").grid(row=12, column=0)
+listbox_pralnie = Listbox(frame_left, height=5)
 
-entry_name=Entry(ramka_formularz)
-entry_name.grid(row=1, column=1)
-entry_surname=Entry(ramka_formularz)
-entry_surname.grid(row=2, column=1)
-entry_location=Entry(ramka_formularz)
-entry_location.grid(row=3, column=1)
-entry_posts=Entry(ramka_formularz)
-entry_posts.grid(row=4, column=1)
+Label(frame_left, text="Pracownicy").grid(row=14, column=0)
+listbox_pracownicy = Listbox(frame_left, height=5)
 
-button_dodaj_obiekt=Button(ramka_formularz, text='Dodaj obiekt', command=add_user)
-button_dodaj_obiekt.grid(row=5, column=0, columnspan=2)
+Label(frame_left, text="Klienci").grid(row=16, column=0)
+listbox_klienci = Listbox(frame_left, height=5)
 
-# ramka_szczegoly_obiektow
-label_szczegoly_obiektow=Label(ramka_szczegoly_obiektow, text="Szczegoly obiektu:")
-label_szczegoly_obiektow.grid(row=0, column=0)
-label_szczegoly_name=Label(ramka_szczegoly_obiektow, text="Imię:")
-label_szczegoly_name.grid(row=1, column=0)
-label_szczegoly_name_wartosc=Label(ramka_szczegoly_obiektow, text="....")
-label_szczegoly_name_wartosc.grid(row=1, column=1)
-label_szczegoly_surname=Label(ramka_szczegoly_obiektow, text="Nazwisko:")
-label_szczegoly_surname.grid(row=1, column=2)
-label_szczegoly_surname_wartosc=Label(ramka_szczegoly_obiektow, text="....")
-label_szczegoly_surname_wartosc.grid(row=1, column=3)
-label_szczegoly_location=Label(ramka_szczegoly_obiektow, text="Miejscowość:")
-label_szczegoly_location.grid(row=1, column=4)
-label_szczegoly_location_wartosc=Label(ramka_szczegoly_obiektow, text="....")
-label_szczegoly_location_wartosc.grid(row=1, column=5)
-label_szczegoly_posts=Label(ramka_szczegoly_obiektow, text="Posty:")
-label_szczegoly_posts.grid(row=1, column=6)
-label_szczegoly_posts_wartosc=Label(ramka_szczegoly_obiektow, text="....")
-label_szczegoly_posts_wartosc.grid(row=1, column=7)
-
-# ramka_mapa
-map_widget = tkintermapview.TkinterMapView(ramka_mapa, width=1200, height=500, corner_radius=5)
-map_widget.grid(row=0, column=0, columnspan=2)
-map_widget.set_position(52.23,21.0)
+map_widget = tkintermapview.TkinterMapView(root, width=900, height=700, corner_radius=0)
+map_widget.grid(row=0, column=1)
+map_widget.set_position(52.23, 21.0)
 map_widget.set_zoom(6)
-
-
 
 root.mainloop()
