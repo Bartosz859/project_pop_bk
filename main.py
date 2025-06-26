@@ -135,6 +135,11 @@ def pokaz_formularz(typ):
         entry_extra = Entry(frame_formularz)
         entry_extra.grid(row=2, column=1)
 
+    if typ == "pralnia":
+        Button(frame_formularz, text="Dodaj pralnię", command=dodaj_pralnie).grid(row=3, column=0, columnspan=2)
+        Button(frame_formularz, text="Edytuj pralnię", command=edytuj_pralnie).grid(row=4, column=0, columnspan=2)
+        Button(frame_formularz, text="Usuń pralnię", command=usun_pralnie).grid(row=5, column=0, columnspan=2)
+
 def usun_pralnie():
     selected_index = listbox_pralnie.curselection()
     if selected_index:
