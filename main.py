@@ -140,6 +140,15 @@ def pokaz_formularz(typ):
         Button(frame_formularz, text="Edytuj pralnię", command=edytuj_pralnie).grid(row=4, column=0, columnspan=2)
         Button(frame_formularz, text="Usuń pralnię", command=usun_pralnie).grid(row=5, column=0, columnspan=2)
 
+    elif typ == "pracownik":
+        Button(frame_formularz, text="Dodaj pracownika", command=dodaj_pracownika).grid(row=3, column=0, columnspan=2)
+        Button(frame_formularz, text="Edytuj pracownika", command=edytuj_pracownika).grid(row=4, column=0, columnspan=2)
+        Button(frame_formularz, text="Usuń pracownika", command=usun_pracownika).grid(row=5, column=0, columnspan=2)
+    elif typ == "klient":
+        Button(frame_formularz, text="Dodaj klienta", command=dodaj_klienta).grid(row=3, column=0, columnspan=2)
+        Button(frame_formularz, text="Edytuj klienta", command=edytuj_klienta).grid(row=4, column=0, columnspan=2)
+        Button(frame_formularz, text="Usuń klienta", command=usun_klienta).grid(row=5, column=0, columnspan=2)
+
 def usun_pralnie():
     selected_index = listbox_pralnie.curselection()
     if selected_index:
