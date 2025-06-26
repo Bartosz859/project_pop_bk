@@ -39,6 +39,7 @@ class Klient(ObiektMapy):
         self.pralnia = pralnia
         super().__init__(nazwa, miejscowosc)
 
+
 def dodaj_pralnie():
     nazwa = entry_name.get()
     miejscowosc = entry_location.get()
@@ -231,6 +232,10 @@ root.title("Mapa Pralni i Klientów")
 
 frame_left = Frame(root)
 frame_left.grid(row=0, column=0, sticky=N)
+
+Button(frame_left, text="Formularz: Pralnia", command=lambda: pokaz_formularz("pralnia")).grid(row=0, column=0, columnspan=2)
+Button(frame_left, text="Formularz: Pracownik", command=lambda: pokaz_formularz("pracownik")).grid(row=1, column=0, columnspan=2)
+Button(frame_left, text="Formularz: Klient", command=lambda: pokaz_formularz("klient")).grid(row=2, column=0, columnspan=2)
 
 frame_formularz = Frame(frame_left)
 frame_formularz.grid(row=3, column=0, columnspan=2, pady=10)
